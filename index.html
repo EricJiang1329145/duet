@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-scene="outdoor">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+  />
+  <meta name="theme-color" content="#e7efdc" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>Duet · 两个人的小院</title>
+  <link
+    rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23334f40'/%3E%3Ccircle cx='24' cy='25' r='6' fill='%23f5dca8'/%3E%3Ccircle cx='41' cy='40' r='6' fill='%23d88968'/%3E%3Cpath d='M22 42L42 22' stroke='%23fff8e9' stroke-width='2' stroke-linecap='round' opacity='.6'/%3E%3C/svg%3E"
+  />
+  <link rel="stylesheet" href="./styles/app.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="backdrop" aria-hidden="true">
+    <span class="sun-orb"></span>
+    <span class="sky-line"></span>
+    <span class="sky-line sky-line--two"></span>
+  </div>
+
+  <main id="stage" aria-label="两个人的小院：2.5D 等距场景"></main>
+  <div id="label-layer" aria-hidden="true"></div>
+  <div id="scene-fade" class="scene-fade" aria-hidden="true"></div>
+
+  <div id="ui">
+    <header class="hud-top">
+      <div class="hud-left">
+        <div class="brand">
+          <span class="brand__mark" aria-hidden="true"><span></span></span>
+          <span class="brand__text">
+            <span class="brand__name">Duet</span>
+            <span class="brand__sub">两个人的小院 · 种植原型</span>
+          </span>
+        </div>
+
+        <div class="scene-status">
+          <div class="scene-pill">
+            <span class="scene-code" id="scene-code">01</span>
+            <span class="scene-divider" aria-hidden="true"></span>
+            <span class="scene-title" id="scene-title">小院</span>
+          </div>
+          <div class="coin-pill" aria-label="金币">
+            <span class="coin-dot" aria-hidden="true"></span>
+            <span>金币</span>
+            <b id="coin-count">0</b>
+          </div>
+          <div class="weather-pill" id="weather-pill" aria-label="深圳天气与晴天倒计时">
+            <span id="weather-label">天气同步中</span>
+            <b id="weather-count"></b>
+          </div>
+          <div class="room-pill" id="room-pill" aria-label="联机房间" hidden>
+            <span class="room-dot" aria-hidden="true"></span>
+            <span id="room-count">1/2</span>
+            <a class="room-exit" href="/logout" title="退出登录">退出</a>
+          </div>
+        </div>
+      </div>
+
+      <aside id="minimap" class="minimap" role="img" aria-label="小地图">
+        <canvas id="minimap-canvas" width="184" height="184" aria-hidden="true"></canvas>
+        <span id="minimap-caption" class="minimap__caption">小院</span>
+      </aside>
+    </header>
+
+    <footer class="hud-footer">
+      <section id="plot-panel" class="plot-panel" aria-label="田地操作" hidden>
+        <div class="plot-panel__header">
+          <div class="plot-panel__title">
+            <span class="plot-panel__eyebrow">田地 <span id="plot-panel-id">01</span></span>
+            <strong id="plot-crop-name" class="plot-panel__crop">小萝卜</strong>
+          </div>
+        </div>
+        <p id="plot-status" class="plot-status">这块地空着，可以播种。</p>
+        <div id="plot-progress" class="plot-progress" hidden>
+          <span id="plot-progress-fill" class="plot-progress__fill"></span>
+        </div>
+        <div id="seed-row" class="seed-row" hidden></div>
+        <div class="plot-panel__foot">
+          <span id="plot-wallet" class="plot-wallet"></span>
+          <button id="plot-shop" class="plot-shop" type="button">种子铺</button>
+        </div>
+        <button id="plot-action" class="plot-action" type="button" data-stage="empty">播种</button>
+        <button id="plot-close" class="plot-close" type="button" aria-label="关闭田地操作">×</button>
+      </section>
+      <div id="hint" class="hint">
+        <span class="hint__dot" aria-hidden="true"></span>
+        <span id="hint-text">轻点田地看格子 ID · 轻点房门进屋</span>
+      </div>
+    </footer>
+  </div>
+
+  <div id="board-panel" class="board-panel" hidden>
+    <div id="board-backdrop" class="board-panel__backdrop" aria-hidden="true"></div>
+    <section
+      class="board-card"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="board-title"
+    >
+      <header class="board-card__head">
+        <div class="board-card__heading">
+          <span class="board-card__eyebrow">客厅 · 两个人的留言</span>
+          <h2 id="board-title" class="board-card__title">留言板</h2>
+        </div>
+        <button
+          id="board-close"
+          class="board-close"
+          type="button"
+          aria-label="关闭留言板"
+        >
+          ×
+        </button>
+      </header>
+
+      <div id="board-list" class="board-list" role="log" aria-live="polite"></div>
+      <p id="board-empty" class="board-empty">还没有留言，写下第一句吧。</p>
+
+      <div class="board-compose">
+        <label class="board-compose__label" for="board-input">写一句</label>
+        <textarea
+          id="board-input"
+          class="board-input"
+          rows="2"
+          maxlength="140"
+          placeholder="今天想和对方说点什么…"
+        ></textarea>
+        <div class="board-compose__foot">
+          <span id="board-count" class="board-count">0/140</span>
+          <button id="board-send" class="board-send" type="button" disabled>
+            贴上
+          </button>
+        </div>
+      </div>
+
+      <footer class="board-card__foot">
+        <span id="board-note" class="board-note">仅保留最近 180 天 · 导出可长期保存</span>
+        <button id="board-export" class="board-export" type="button">
+          导出 .md
+        </button>
+      </footer>
+    </section>
+  </div>
+
+  <button
+    id="audio-toggle"
+    class="audio-fab"
+    type="button"
+    aria-label="切换背景音乐和雨声"
+    aria-pressed="true"
+    title="背景音乐与雨声"
+  >
+    <span class="audio-fab__note" aria-hidden="true">♪</span>
+  </button>
+
+  <button
+    id="panel-toggle"
+    class="panel-fab"
+    type="button"
+    aria-label="打开今日面板"
+    aria-expanded="false"
+  >
+    <span class="panel-fab__mark" aria-hidden="true"><i></i><i></i><i></i></span>
+    <span>面板</span>
+  </button>
+
+  <div id="panel-sheet" class="board-panel panel-panel" hidden>
+    <div id="panel-backdrop" class="board-panel__backdrop" aria-hidden="true"></div>
+    <section
+      class="board-card panel-card"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="panel-title"
+    >
+      <header class="board-card__head">
+        <div class="board-card__heading">
+          <span class="board-card__eyebrow">共享 · 今日该做什么</span>
+          <h2 id="panel-title" class="board-card__title">面板</h2>
+        </div>
+        <button id="panel-close" class="board-close" type="button" aria-label="关闭面板">
+          ×
+        </button>
+      </header>
+
+      <div class="panel-scroll">
+        <div id="panel-summary" class="panel-summary"></div>
+
+        <section class="panel-section">
+          <div class="panel-section__head">
+            <h3>现在可以做</h3>
+            <span class="panel-section__note">按当前状态自动整理</span>
+          </div>
+          <div id="panel-tasks" class="panel-tasks"></div>
+        </section>
+
+        <section class="panel-section">
+          <div class="panel-section__head">
+            <h3>作物状态</h3>
+            <span class="panel-section__note">成熟时间按当前季节计算</span>
+          </div>
+          <div id="panel-crops" class="panel-crops"></div>
+        </section>
+
+        <section class="panel-section">
+          <div class="panel-section__head">
+            <h3>种子与收益</h3>
+            <span class="panel-section__note">当季生长更快</span>
+          </div>
+          <div id="panel-seeds" class="panel-seeds"></div>
+        </section>
+
+        <section class="panel-section">
+          <div class="panel-section__head">
+            <h3>厨房</h3>
+            <span class="panel-section__note">收获会留下食材</span>
+          </div>
+          <div id="panel-kitchen" class="panel-storage"></div>
+        </section>
+
+        <section class="panel-section">
+          <div class="panel-section__head">
+            <h3>你们</h3>
+            <span class="panel-section__note">房间内共享</span>
+          </div>
+          <div id="panel-players" class="panel-players"></div>
+        </section>
+
+        <section class="panel-section">
+          <div class="panel-section__head">
+            <h3>新场景</h3>
+            <span class="panel-section__note">金币共同解锁</span>
+          </div>
+          <div id="panel-scenes" class="panel-scenes"></div>
+        </section>
+
+        <section class="panel-section">
+          <div class="panel-section__head">
+            <h3>仓库</h3>
+            <span class="panel-section__note">采集物可以在这里出售</span>
+          </div>
+          <div id="panel-storage" class="panel-storage"></div>
+        </section>
+      </div>
+
+      <footer class="panel-card__foot">
+        <span class="panel-note">面板只读取共享状态，不会替代田地操作。</span>
+        <button id="panel-shop" class="board-export" type="button">打开种子铺</button>
+      </footer>
+    </section>
+  </div>
+
+  <div id="chat-dock" class="chat-dock" hidden>
+    <button
+      id="chat-toggle"
+      class="chat-fab"
+      type="button"
+      aria-label="和对方聊天"
+      aria-expanded="false"
+    >
+      <span class="chat-fab__icon" aria-hidden="true"></span>
+      <span class="chat-fab__dot" aria-hidden="true" hidden></span>
+    </button>
+  </div>
+
+  <section id="chat-sheet" class="chat-sheet" hidden aria-label="聊天输入">
+    <div class="chat-sheet__head">
+      <span class="chat-sheet__title">和对方说一句</span>
+      <button id="chat-close" class="chat-close" type="button" aria-label="关闭聊天">×</button>
+    </div>
+    <div class="chat-sheet__row">
+      <textarea
+        id="chat-input"
+        class="chat-input"
+        rows="1"
+        maxlength="1024"
+        placeholder="说点什么…支持 emoji"
+        enterkeyhint="send"
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+      ></textarea>
+      <button id="chat-send" class="chat-send" type="button" disabled>发送</button>
+    </div>
+    <div class="chat-sheet__foot">
+      <span id="chat-hint" class="chat-hint">同场景可见 · 12 秒后消失</span>
+      <span id="chat-count" class="chat-count">0/60</span>
+    </div>
+  </section>
+
+  <div id="shop-panel" class="board-panel shop-panel" hidden>
+    <div id="shop-backdrop" class="board-panel__backdrop" aria-hidden="true"></div>
+    <section
+      class="board-card shop-card"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="shop-title"
+    >
+      <header class="board-card__head">
+        <div class="board-card__heading">
+          <span class="board-card__eyebrow">小院 · 种子铺</span>
+          <h2 id="shop-title" class="board-card__title">种子铺</h2>
+        </div>
+        <button id="shop-close" class="board-close" type="button" aria-label="关闭种子铺">×</button>
+      </header>
+      <p class="shop-wallet">现有金币 <b id="shop-coins">0</b></p>
+      <div id="shop-seeds" class="shop-seeds"></div>
+      <div class="shop-upgrades">
+        <article class="shop-upgrade" id="shop-greenhouse-card">
+          <div class="shop-upgrade__head">
+            <b>玻璃温室</b>
+            <span class="shop-upgrade__price" id="shop-greenhouse-price">80 金币</span>
+          </div>
+          <p id="shop-greenhouse-copy" class="shop-upgrade__copy">
+            盖在两块新开垦的地上：收成多卖 25%，且必定回收一颗种子。
+          </p>
+          <button id="shop-greenhouse" class="shop-buy" type="button">搭温室</button>
+        </article>
+        <article class="shop-upgrade">
+          <div class="shop-upgrade__head">
+            <b>今日补给</b>
+            <span class="shop-upgrade__price" id="shop-gift-price">免费</span>
+          </div>
+          <p id="shop-gift-copy" class="shop-upgrade__copy">
+            每天可以领一次：6 金币 + 2 颗小萝卜种子。
+          </p>
+          <button id="shop-gift" class="shop-buy" type="button">领取</button>
+        </article>
+      </div>
+      <footer class="board-card__foot">
+        <span id="shop-note" class="board-note">种子会保存在小院存档里</span>
+      </footer>
+    </section>
+  </div>
+
+  <div id="kitchen-panel" class="board-panel kitchen-panel" hidden>
+    <div id="kitchen-backdrop" class="board-panel__backdrop" aria-hidden="true"></div>
+    <section
+      class="board-card shop-card kitchen-card"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="kitchen-title"
+    >
+      <header class="board-card__head">
+        <div class="board-card__heading">
+          <span class="board-card__eyebrow">一层 · 厨房</span>
+          <h2 id="kitchen-title" class="board-card__title">灶台</h2>
+        </div>
+        <button id="kitchen-close" class="board-close" type="button" aria-label="关闭灶台">×</button>
+      </header>
+      <p class="shop-wallet">现有金币 <b id="kitchen-coins">0</b></p>
+      <div class="kitchen-scroll">
+        <section class="panel-section">
+          <div class="panel-section__head">
+            <h3>能做的菜</h3>
+            <span class="panel-section__note">收获会额外留下食材</span>
+          </div>
+          <div id="kitchen-recipes" class="kitchen-recipes"></div>
+        </section>
+        <section class="panel-section">
+          <div class="panel-section__head">
+            <h3>做好的菜</h3>
+            <span class="panel-section__note">可以出售，也可以留在桌上</span>
+          </div>
+          <div id="kitchen-dishes" class="kitchen-dishes"></div>
+        </section>
+        <section class="panel-section">
+          <div class="panel-section__head">
+            <h3>餐桌</h3>
+            <span class="panel-section__note">两个座位</span>
+          </div>
+          <div id="kitchen-table" class="kitchen-table"></div>
+        </section>
+      </div>
+      <footer class="board-card__foot">
+        <span id="kitchen-note" class="board-note">
+          灶台在一层厨房；留到桌上的菜会一直等到对方回来。
+        </span>
+      </footer>
+    </section>
+  </div>
+
+  <div id="decor-panel" class="board-panel decor-panel" hidden>
+    <div id="decor-backdrop" class="board-panel__backdrop" aria-hidden="true"></div>
+    <section
+      class="board-card decor-card"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="decor-title"
+    >
+      <header class="board-card__head">
+        <div class="board-card__heading">
+          <span class="board-card__eyebrow">二层 · 娱乐室</span>
+          <h2 id="decor-title" class="board-card__title">添置家具</h2>
+        </div>
+        <button id="decor-close" class="board-close" type="button" aria-label="关闭装修面板">×</button>
+      </header>
+      <p class="shop-wallet">现有金币 <b id="decor-coins">0</b></p>
+      <div id="decor-list" class="decor-list"></div>
+      <footer class="board-card__foot">
+        <span id="decor-note" class="board-note">两端共享 · 已添置的家具可全额退还</span>
+      </footer>
+    </section>
+  </div>
+
+  <div id="room-full" class="room-full" hidden role="dialog" aria-modal="true" aria-labelledby="room-full-title">
+    <div class="room-full__card">
+      <p class="room-full__eyebrow">DUET · 房间</p>
+      <h2 id="room-full-title" class="room-full__title">房间已满</h2>
+      <p id="room-full-copy" class="room-full__copy">
+        房间最多两个人。关掉旧标签页或旧设备后再试；静默 30 秒的旧连接会自动释放。
+      </p>
+      <div class="room-full__actions">
+        <button id="room-full-retry" class="room-full__primary" type="button">重试</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="player-pointer" class="player-pointer" hidden aria-hidden="true">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <div id="boot" role="status" aria-live="polite">
+    <div class="boot-card">
+      <span class="boot-mark" aria-hidden="true"></span>
+      <p class="boot-title">正在搭起小院</p>
+      <p class="boot-sub">正在读取你的小院和上次的位置…</p>
+      <span class="boot-loader" aria-hidden="true"><span></span><span></span><span></span></span>
+    </div>
+  </div>
+
+  <noscript>
+    <div class="noscript">这个小院需要启用 JavaScript 才能进入。</div>
+  </noscript>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

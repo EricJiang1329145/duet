@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="430" viewBox="0 0 1000 430" role="img" aria-labelledby="title desc">
+  <title id="title">Duet architecture</title>
+  <desc id="desc">Browser clients use static ES modules and a WebSocket to a Cloudflare Worker and one Durable Object. The object owns the shared room and fetches Shenzhen weather.</desc>
+  <rect width="1000" height="430" fill="#f7efe2"/>
+  <g font-family="Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif">
+    <text x="42" y="48" fill="#2d3b31" font-size="22" font-weight="700">Duet · small, shared, server-authoritative</text>
+    <text x="42" y="73" fill="#657166" font-size="13">两个浏览器 → 一个房间 → 一个 Durable Object</text>
+
+    <rect x="42" y="112" width="225" height="150" rx="18" fill="#fff9ee" stroke="#d9c9ad"/>
+    <text x="64" y="143" fill="#2d3b31" font-size="16" font-weight="700">Browser A</text>
+    <text x="64" y="168" fill="#657166" font-size="12">native ES modules</text>
+    <text x="64" y="188" fill="#657166" font-size="12">Three.js · Pointer Events</text>
+    <text x="64" y="208" fill="#657166" font-size="12">local save (solo)</text>
+    <text x="64" y="228" fill="#b96545" font-size="12">cookies + WebSocket</text>
+
+    <rect x="390" y="112" width="225" height="150" rx="18" fill="#fff9ee" stroke="#d9c9ad"/>
+    <text x="412" y="143" fill="#2d3b31" font-size="16" font-weight="700">Browser B</text>
+    <text x="412" y="168" fill="#657166" font-size="12">same static app</text>
+    <text x="412" y="188" fill="#657166" font-size="12">presence at ~10 Hz</text>
+    <text x="412" y="208" fill="#657166" font-size="12">chat · board · actions</text>
+    <text x="412" y="228" fill="#b96545" font-size="12">no build step</text>
+
+    <rect x="700" y="98" width="255" height="178" rx="18" fill="#334f40"/>
+    <text x="722" y="130" fill="#fff9ee" font-size="16" font-weight="700">Cloudflare Worker</text>
+    <text x="722" y="155" fill="#d8e4d7" font-size="12">/login · /hash · /ws</text>
+    <text x="722" y="176" fill="#d8e4d7" font-size="12">signed HttpOnly session</text>
+    <text x="722" y="197" fill="#d8e4d7" font-size="12">static assets + DO routing</text>
+    <text x="722" y="226" fill="#e6b769" font-size="12">one formal room: MAIN</text>
+    <text x="722" y="247" fill="#d8e4d7" font-size="12">A/B seat secrets</text>
+
+    <rect x="700" y="306" width="255" height="88" rx="16" fill="#fff9ee" stroke="#d9c9ad"/>
+    <text x="722" y="334" fill="#2d3b31" font-size="14" font-weight="700">Durable Object · Room</text>
+    <text x="722" y="355" fill="#657166" font-size="11">SQLite state · presence · board</text>
+    <text x="722" y="374" fill="#657166" font-size="11">weather cache · alarm · seq</text>
+
+    <rect x="390" y="306" width="225" height="88" rx="16" fill="#fff9ee" stroke="#d9c9ad"/>
+    <text x="412" y="334" fill="#2d3b31" font-size="14" font-weight="700">Open-Meteo</text>
+    <text x="412" y="355" fill="#657166" font-size="11">fixed Shenzhen coordinates</text>
+    <text x="412" y="374" fill="#657166" font-size="11">rain → shared crop watering</text>
+
+    <path d="M267 187 C330 187 330 187 390 187" fill="none" stroke="#b96545" stroke-width="2.5" stroke-dasharray="6 6"/>
+    <path d="M615 187 C660 187 660 187 700 187" fill="none" stroke="#b96545" stroke-width="2.5"/>
+    <path d="M827 276 L827 306" fill="none" stroke="#b96545" stroke-width="2.5"/>
+    <path d="M700 350 L615 350" fill="none" stroke="#b96545" stroke-width="2.5" stroke-dasharray="6 6"/>
+    <text x="304" y="176" fill="#b96545" font-size="11">WebSocket</text>
+    <text x="638" y="176" fill="#b96545" font-size="11">upgrade</text>
+    <text x="838" y="296" fill="#b96545" font-size="11">authority</text>
+    <text x="630" y="342" fill="#b96545" font-size="11">fetch / cache</text>
+
+    <text x="42" y="405" fill="#657166" font-size="11">Solo mode bypasses the room and stores the farm in localStorage. No database or account is required for local play.</text>
+  </g>
+</svg>

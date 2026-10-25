@@ -1,0 +1,20 @@
+.DS_Store
+node_modules/
+*.log
+.env
+.env.*
+!.env.example
+
+# Local wrangler state: never commit build output or dev caches.
+.wrangler-home/
+.wrangler-logs/
+worker/.wrangler/
+worker/.dry-run/
+worker/dev-assets/
+public/
+tools/ping-worker/.wrangler/
+tools/ping-worker/.dry-run/
+
+# Local Worker secrets for `wrangler dev`.
+worker/.dev.vars
+worker/.dev.vars.*
