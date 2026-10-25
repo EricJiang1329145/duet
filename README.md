@@ -3,6 +3,7 @@
 </p>
 
 <h1 align="center">Duet · 两个人的小院</h1>
+<p align="center"><a href="docs/assets/duet-intro-15s.mp4"><strong>▶ 观看 15 秒介绍片 / Watch the 15s intro</strong></a></p>
 <p align="center"><strong>A quiet 2.5D shared farm for two people.<br/>一座给两个人的 2.5D 共享小院。</strong></p>
 
 <p align="center">
